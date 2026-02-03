@@ -1,5 +1,6 @@
+from pathlib import Path
+
 import pytest
-from sphinx.testing.path import path
 
 
 try:
@@ -14,4 +15,4 @@ pytest_plugins = 'sphinx.testing.fixtures'
 
 @pytest.fixture(scope='session')
 def rootdir():
-    return path(__file__).parent.abspath() / 'sphinx_math_dollar' / 'tests'
+    return Path(__file__).parent.resolve() / 'sphinx_math_dollar' / 'tests'
