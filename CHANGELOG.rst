@@ -2,6 +2,19 @@
  Changelog
 ===========
 
+1.3 (2026-02-05)
+=================
+
+- Fix crash when encountering unknown node types. The extension now skips
+  unknown nodes with a warning instead of crashing (@MarelliF).
+- Return metadata in ``setup()`` to improve compatibility with parallel
+  processing (@dabacon).
+- Add ``pyproject.toml`` for modern Python packaging.
+- Migrate CI from Travis CI to GitHub Actions.
+- Add Sphinx 9 compatibility by replacing ``sphinx.testing.path`` with
+  ``pathlib``.
+- Update supported Python versions to 3.11, 3.12, 3.13, 3.14, and PyPy 3.11.
+
 1.2.1 (2022-04-25)
 ==================
 
