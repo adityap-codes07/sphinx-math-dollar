@@ -1,6 +1,6 @@
 import re
 
-def split_dollars(text):
+def split_dollars(text, *, unmatched="ignore"):
     r"""
     Split text into text and math segments.
 
@@ -32,7 +32,7 @@ def split_dollars(text):
 
       $f(n) = 0 \text{ if $n$ is prime}$
 
-    Thus the above line would get matched fully as math.
+    Thus, the above line would get matched fully as math.
 
     """
     # This searches for "$blah$" inside a pair of curly braces --
@@ -61,7 +61,10 @@ def split_dollars(text):
         if t:
             res.append((typ, t))
 
+    # Store spans of valid matches
+    spans = []
     for m in dollars.finditer(text):
+        spans.append((m.start(), m.end()))
         text_fragment = text[start:m.start()]
         math_fragment = m.group(2)
         double_dollar = m.group(1)
@@ -72,5 +75,29 @@ def split_dollars(text):
         else:
             _add_fragment(math_fragment, 'math')
     _add_fragment(text[start:end], 'text')
+
+    # Detect unmatched unescaped dollars that were NOT part of a valid match
+    # Find every unescaped '$' in the full processed text
+    unescaped_dollars = list(re.finditer(r"(?<!\\)\$", text))
+
+    # Spans are in sorted order because finditer is left-to-right
+    span_i = 0
+    for dm in unescaped_dollars:
+        pos = dm.start()
+
+        # move span_i forward until span ends after pos
+        while span_i < len(spans) and pos >= spans[span_i][1]:
+            span_i += 1
+
+        inside_valid = (
+                span_i < len(spans) and spans[span_i][0] <= pos < spans[span_i][1]
+        )
+
+        if not inside_valid:
+            if not inside_valid:
+                if unmatched == "error":
+                    raise ValueError("Unmatched '$' detected. Escape literal dollars as '\\$'.")
+                # if unmatched == "ignore": do nothing
+                break
 
     return res
