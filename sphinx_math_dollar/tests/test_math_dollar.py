@@ -70,3 +70,18 @@ def test_unmatched_dollar_error_mode():
 
 def test_escaped_dollar_still_ok():
     assert split_dollars(r"This costs \$12", unmatched="error") == [("text", "This costs $12")]
+
+def test_inline_paren_math():
+    assert split_dollars(r"Hello \(x+1\)") == [("text", "Hello "), ("math", "x+1")]
+
+def test_display_bracket_math():
+    assert split_dollars(r"\[x^2\]") == [("display math", "x^2")]
+
+def test_mixed_delims_order():
+    assert split_dollars(r"A \(x\) B $y$ C") == [
+        ("text", "A "),
+        ("math", "x"),
+        ("text", " B "),
+        ("math", "y"),
+        ("text", " C"),
+    ]

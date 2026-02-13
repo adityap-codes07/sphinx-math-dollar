@@ -50,6 +50,8 @@ def split_dollars(text, *, unmatched="ignore"):
     text = re.sub(r"({[^{}$]*\$[^{}$]*\$[^{}]*})", repl, text)
     # matches $...$
     dollars = re.compile(r"(?<!\$)(?<!\\)\$(\$)?([^\$ ](?:(?<=\\)\$|[^\$])*?)(?<!\\)\$(?(1)\$|)")
+    paren_inline = re.compile(r"(?<!\\)\\\((.*?)\\\)", re.S)
+    bracket_display = re.compile(r"(?<!\\)\\\[(.*?)\\\]", re.S)
     res = []
     start = 0
     end = len(text)
@@ -63,18 +65,35 @@ def split_dollars(text, *, unmatched="ignore"):
 
     # Store spans of valid matches
     spans = []
+    matches = []
+
+    # Dollar matches: $...$ and $$...$$
     for m in dollars.finditer(text):
         spans.append((m.start(), m.end()))
-        text_fragment = text[start:m.start()]
         math_fragment = m.group(2)
         double_dollar = m.group(1)
-        start = m.end()
-        _add_fragment(text_fragment, 'text')
-        if double_dollar:
-            _add_fragment(math_fragment, 'display math')
-        else:
-            _add_fragment(math_fragment, 'math')
-    _add_fragment(text[start:end], 'text')
+        typ = "display math" if double_dollar else "math"
+        matches.append((m.start(), m.end(), math_fragment, typ))
+
+    # Parenthesis matches: \( ... \)
+    for m in paren_inline.finditer(text):
+        matches.append((m.start(), m.end(), m.group(1), "math"))
+
+    # Bracket matches: \[ ... \]
+    for m in bracket_display.finditer(text):
+        matches.append((m.start(), m.end(), m.group(1), "display math"))
+
+    matches.sort(key=lambda x: x[0])
+
+    start = 0
+    for s, e, frag, typ in matches:
+        if s < start:
+            continue
+        _add_fragment(text[start:s], "text")
+        _add_fragment(frag, typ)
+        start = e
+
+    _add_fragment(text[start:end], "text")
 
     def _find_unmatched_dollars(s: str) -> bool:
         #
